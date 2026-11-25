@@ -1,0 +1,25 @@
+services:
+  backend:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      HOST: 0.0.0.0
+      LLM_API_KEYS: ${LLM_API_KEYS:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-30000}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      DATABASE_URL: sqlite:////data/app.db
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      ENABLE_FAILURE_SIMULATION: ${ENABLE_FAILURE_SIMULATION:-true}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-3600}
+    volumes: ["chat-data:/data"]
+  frontend:
+    image: nginx:alpine
+    ports: ["3000:80"]
+    depends_on: [backend]
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+volumes:
+  chat-data:

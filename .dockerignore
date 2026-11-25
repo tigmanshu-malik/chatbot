@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+**/.env
+**/.env.*
+**/*.db
+**/*.db-*
+node_modules
+tmp
+dist
+output

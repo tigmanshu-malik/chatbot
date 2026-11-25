@@ -1,0 +1,11 @@
+{
+  "name": "lyftr-resilient-chatbot",
+  "private": true,
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "start": "node backend/server.js",
+    "build:frontend": "node scripts/build-frontend.js",
+    "demo": "node scripts/demo.js",
+    "test": "node --test backend/tests/*.test.js"
+  }
+}

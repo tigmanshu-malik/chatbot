@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lyftr AI Chat</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#13213d;background:#f4f7fb}*{box-sizing:border-box}body{margin:0}.app{min-height:100vh;display:flex;flex-direction:column}.top{padding:22px 7%;background:#fff;border-bottom:1px solid #e4eaf2;display:flex;justify-content:space-between;align-items:center;gap:16px}.brand{font-weight:800;font-size:21px;color:#163a74}.brand span{color:#37a6e5}.status{font-size:13px;background:#fff1cf;color:#7a540c;padding:8px 12px;border-radius:99px}.status.live{color:#24795b;background:#e8f7ef}.shell{width:min(980px,92%);margin:36px auto;display:flex;flex:1;flex-direction:column}.hero{display:flex;align-items:center;justify-content:space-between;gap:16px}.hero h1{margin:0;font-size:34px}.hero p{color:#66748b;line-height:1.5}.new-chat{border:1px solid #ccd7e5;background:#fff;color:#163a74;border-radius:10px;padding:10px 15px;white-space:nowrap;cursor:pointer}.chat{background:#fff;border:1px solid #e4eaf2;border-radius:18px;padding:24px;box-shadow:0 12px 35px #163a740d;flex:1;min-height:400px;max-height:65vh;overflow-y:auto}.empty{text-align:center;color:#74849b;padding:90px 15px;line-height:1.7}.msg{margin:16px 0;display:flex}.msg.user{justify-content:flex-end}.bubble{max-width:85%;padding:14px 16px;border-radius:15px;line-height:1.5;overflow-wrap:anywhere}.reply{white-space:pre-wrap}.user .bubble{background:#1769aa;color:#fff;border-bottom-right-radius:4px}.assistant .bubble{background:#eef3f8;border-bottom-left-radius:4px}.demo-label{font-size:11px;color:#866015;margin-bottom:6px}.meta{font-size:11px;color:#586980;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}.composer{display:flex;gap:10px;margin-top:16px}.composer textarea{flex:1;min-width:0;border:1px solid #ccd7e5;border-radius:12px;padding:14px;font:inherit;resize:vertical}.composer button{border:0;border-radius:12px;background:#1769aa;color:#fff;padding:0 22px;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.error{color:#b33;margin:10px 0;line-height:1.5}.hint{color:#6d7d94;font-size:12px;margin:9px 2px}@media(max-width:600px){.hero h1{font-size:25px}.bubble{max-width:96%}.top{padding:18px 4%}.status{font-size:11px}.chat{padding:15px}.shell{margin:24px auto}.hero{align-items:flex-start}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="top"><div class="brand">Lyftr <span>AI</span></div><div class="status" id="status" role="status">Connecting…</div></header>
+  <main class="shell">
+    <section class="hero"><div><h1>Ask anything, reliably.</h1><p id="description">Conversation memory, response caching, and automatic provider failover.</p></div><button class="new-chat" id="new-chat" type="button">New chat</button></section>
+    <section class="chat" id="chat" aria-label="Conversation" role="log" aria-live="polite"></section>
+    <div class="error" id="error" role="alert"></div>
+    <form class="composer" id="form">
+      <textarea id="input" data-testid="chat-input" aria-label="Your message" rows="2" maxlength="4000" placeholder="Message Lyftr AI…"></textarea>
+      <button data-testid="send-button" id="send" type="submit">Send</button>
+    </form>
+    <div class="hint">Enter to send · Shift + Enter for a new line · New chat starts a separate conversation.</div>
+  </main>
+</div>
+<script>
+  const API = window.LYFTR_API_URL || (location.protocol === 'file:' ? 'http://localhost:8000' : '');
+  let sessionId;
+  let pending = false;
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  const chat = document.getElementById('chat');
+  const error = document.getElementById('error');
+  const send = document.getElementById('send');
+  const newChat = document.getElementById('new-chat');
+
+  function resetChat() {
+    sessionId = 's-' + crypto.randomUUID();
+    chat.replaceChildren();
+    const empty = document.createElement('div');
+    empty.id = 'empty';
+    empty.className = 'empty';
+    empty.textContent = 'Start a conversation. Try “my name is tigmanshu”, then “what is my name?”';
+    chat.appendChild(empty);
+    error.textContent = '';
+    input.value = '';
+    input.focus();
+  }
+
+  function add(role, text, metadata) {
+    document.getElementById('empty')?.remove();
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + role;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    if (metadata?.provider_mode === 'demo') {
+      const label = document.createElement('div');
+      label.className = 'demo-label';
+      label.textContent = 'LOCAL DEMO · limited replies · estimated tokens';
+      bubble.appendChild(label);
+    }
+    const reply = document.createElement('div');
+    reply.className = 'reply';
+    reply.textContent = text;
+    bubble.appendChild(reply);
+    if (role === 'assistant') {
+      wrap.dataset.testid = 'assistant-message';
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const fields = [
+        ['meta-source', metadata.resolution_source, ''],
+        ['meta-model', metadata.model, ''],
+        ['meta-latency', metadata.latency_ms + ' ms', ''],
+        ['meta-input-tokens', metadata.input_tokens, 'in '],
+        ['meta-output-tokens', metadata.output_tokens, 'out '],
+      ];
+      for (const [testid, value, label] of fields) {
+        const item = document.createElement('span');
+        if (label) item.appendChild(document.createTextNode(label));
+        const valueNode = document.createElement('span');
+        valueNode.dataset.testid = testid;
+        valueNode.textContent = String(value);
+        item.appendChild(valueNode);
+        meta.appendChild(item);
+      }
+      if (metadata.fallback_attempts) {
+        const fallback = document.createElement('span');
+        fallback.textContent = `Recovered with ${metadata.key_id}`;
+        meta.appendChild(fallback);
+      }
+      bubble.appendChild(meta);
+    }
+    wrap.appendChild(bubble);
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  form.onsubmit = async event => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message || pending) return;
+    pending = true;
+    input.value = '';
+    add('user', message);
+    error.textContent = '';
+    send.disabled = newChat.disabled = true;
+    send.textContent = 'Sending…';
+    try {
+      const response = await fetch(API + '/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, message }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Please check your message and try again.');
+      add('assistant', data.reply, data.metadata);
+    } catch (err) {
+      error.textContent = err.message === 'Failed to fetch' ? 'Could not reach the chat server. Please try again.' : err.message;
+      input.value = message;
+    } finally {
+      pending = false;
+      send.disabled = newChat.disabled = false;
+      send.textContent = 'Send';
+      input.focus();
+    }
+  };
+  input.onkeydown = event => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
+  };
+  newChat.onclick = resetChat;
+  resetChat();
+  fetch(API + '/health').then(async response => {
+    if (!response.ok) throw new Error();
+    const health = await response.json();
+    const status = document.getElementById('status');
+    status.textContent = health.provider_mode === 'demo' ? 'Local demo · limited answers' : 'AI connected';
+    status.classList.toggle('live', health.provider_mode !== 'demo');
+    if (health.provider_mode === 'demo') document.getElementById('description').textContent = 'Local preview: test name recall and conversation history. Real API keys enable general AI answers.';
+  }).catch(() => { document.getElementById('status').textContent = 'Server unavailable'; });
+</script>
+</body>
+</html>
