@@ -2,8 +2,12 @@
 
 ## Live URLs
 
-Local UI and API: http://localhost:8000. Docker UI: http://localhost:3000.
-No public deployment has been created.
+- Frontend: https://lyftr-chat-web-0szr.onrender.com
+- Backend: https://lyftr-chat-api-h1xd.onrender.com
+- Backend health: https://lyftr-chat-api-h1xd.onrender.com/health
+- Local UI and API: http://localhost:8000. Docker UI: http://localhost:3000.
+
+Both cloud services use Render's free tier. The backend can take time to wake up after inactivity. Its SQLite files are ephemeral and can be lost on restart or redeploy; use the paid persistent-disk configuration for durable cloud history. Local/Docker persistence is separate from this free hosting limitation.
 
 ## Run locally
 
@@ -91,8 +95,10 @@ real configured keys.
 Codex desktop and Node.js. The current preview uses Node's built-in HTTP and
 SQLite libraries, plus an OpenAI-compatible HTTP adapter and a plain HTML/JS UI.
 It does **not yet satisfy** the assignment's React, Python/FastAPI, LiteLLM,
-public deployment or submission/video requirements. The running local preview
-should not be described as a completed assignment submission.
+durable cloud storage or submission/video requirements. A second distinct real
+key is still required for successful live key-to-key failover. Public frontend
+and backend deployments are available above; this is not yet a fully compliant
+assignment submission.
 
 ## Bonus features
 

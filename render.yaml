@@ -28,14 +28,9 @@ services:
       - key: ENABLE_FAILURE_SIMULATION
         value: "true"
       - key: ALLOWED_ORIGINS
-        value: "*"
+        value: https://lyftr-chat-web-0szr.onrender.com
       - key: CACHE_TTL_SECONDS
         value: "3600"
-      - key: PUBLIC_API_URL
-        fromService:
-          type: web
-          name: lyftr-chat-api
-          envVarKey: RENDER_EXTERNAL_URL
   - type: web
     name: lyftr-chat-web
     runtime: static
@@ -46,10 +41,7 @@ services:
       - key: NODE_VERSION
         value: 26.13.1
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: lyftr-chat-api
-          envVarKey: PUBLIC_API_URL
+        value: https://lyftr-chat-api-h1xd.onrender.com
     headers:
       - path: /*
         name: Cache-Control
