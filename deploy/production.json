@@ -1,0 +1,10 @@
+{
+  "provider": "Render",
+  "repository": "https://github.com/tigmanshu-malik/chatbot",
+  "frontend_url": "https://lyftr-chat-web-0szr.onrender.com",
+  "frontend_service_id": "srv-dc38977avr4c73el78q0",
+  "backend_url": "https://lyftr-chat-api-h1xd.onrender.com",
+  "backend_service_id": "srv-dc388gu8bjmc73etum60",
+  "plan": "free",
+  "sqlite_persistent_in_cloud": false
+}

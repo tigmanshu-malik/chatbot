@@ -1,11 +1,20 @@
 # Publish the frontend and backend
 
-Status: deployment files are prepared; no public deployment exists yet. An authenticated GitHub and Render account is required to continue.
+Current deployments:
+
+- Frontend: https://lyftr-chat-web-0szr.onrender.com
+- Backend: https://lyftr-chat-api-h1xd.onrender.com
+- Health: https://lyftr-chat-api-h1xd.onrender.com/health
+- Source: https://github.com/tigmanshu-malik/chatbot
+
+The current services were created individually in Render using the Node web-service and static-site forms. Both use the free plan. API keys were imported only into the private backend environment, while the frontend receives only the public `BACKEND_URL`.
+
+For another deployment:
 
 1. Create or sign into GitHub and Render. Create a repository for this project. A private repository is sufficient for Render; make it public only if you choose to satisfy the assignment's public-repository requirement.
 2. Upload the source files from this project. Never upload `.env`, `backend/app.db*`, `tmp`, `dist` or `node_modules`. The prepared source ZIP under `output/deploy` excludes credentials and chat history. Extract it before uploading its contents to GitHub.
 3. In Render choose **New > Blueprint**, select that repository, and use the root `render.yaml` file. Review the free plan. Enter your real key pool into the prompted `LLM_API_KEYS` secret field.
-4. Render creates `lyftr-chat-api` and `lyftr-chat-web`. Wait until both show Live. The frontend build reads the backend's real public URL through the Blueprint service reference; no URL is guessed from a service name.
+4. Render creates `lyftr-chat-api` and `lyftr-chat-web`. Wait until both show Live. `BACKEND_URL` is set to the actual backend address shown in Render. For a fresh deployment in another account, deploy the backend first and update this value to its new public URL before building the frontend. Render does not allow chaining references to another referenced environment variable.
 5. Copy the public URL displayed for `lyftr-chat-web` as the frontend link. Copy the public URL displayed for `lyftr-chat-api` as the backend link. Append `/health` to check the API.
 6. Set the backend's `ALLOWED_ORIGINS` to the actual frontend origin, then redeploy the backend. Confirm browser chat still works.
 7. Test conversation memory, replay an identical conversation in a new chat to check caching, and verify the failure simulation hook. With a second distinct real key, run the failure hook with `key_1=429` and expect `key_id: key_2`.
